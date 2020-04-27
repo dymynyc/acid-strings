@@ -1,0 +1,6 @@
+# acid-strings
+
+
+## License
+
+MIT

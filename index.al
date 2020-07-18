@@ -1,13 +1,16 @@
 (module
+  (def log_s (system "sys" "log_s" (i)))
+  (def log_i (system "sys" "log_i" (i)))
+
   ;; string format: length(i32) data(bytes){length}
   (def mem (import "acid-memory"))
 
   (def min {fun [x y] (if (lt x y) x y)})
   (def length {fun [w] (i32_load w)})
 
-  (def at (fun [s i] {i32_load8 (add 4 s i)}))
+  (def at (fun [s I2] {i32_load8 (add 4 s I2)}))
 
-  (def set_at (fun [s i v] {i32_store8 (add 4 s i) v}))
+  (def set_at (fun [s I3 v] {i32_store8 (add 4 s I3) v}))
 
   (export length length)
   (export at at)
@@ -18,6 +21,8 @@
     (i32_store s len)
     s
   }))
+
+  (export create create)
 
   (def range (fun (start end initial reduce)
     ((fun R (acc i)
@@ -43,23 +48,31 @@
 
   ;; compare each character up to length of shortest input
   ;; else the long one is greater
-  (export compare {fun [a b] (block
-    (def len {min (length a) (length b)})
-      ;;returns 0 or 1 or -1
-      ((fun R (acc i)
-        (if (and (lt i len) (eq 0 acc))
-          (R (sub (at a i) (at b i)) (add 1 i))
-          acc) ;;return true if we made it to end
-      ) 0 0)
+  (export compare {fun [a b]
+    (if (eq a b) 0
+      (block
+        (def len {min (length a) (length b)})
+        ;;returns 0 or 1 or -1
+        ((fun R (acc i)
+          (if (and (lt i len) (eq 0 acc))
+            (R (sub (at a i) (at b i)) (add 1 i))
+            acc) ;;return true if we made it to end
+        ) 0 0)
+      )
     )
   })
 
   (export slice {fun (str start end) [block
     (def len [sub (if end end (length str)) start])
     (def _str (create len))
-    (range 0 len 0 (fun (acc i)
-      [set_at _str i {at str (add start i)}]
-    ))
+  ;;  (log_i len)
+    (range 0 len 0 (fun (acc j) (block
+;;      (log_i 9999) (log_i i)
+;;      (log_i {at str (add start i)})
+;;      (log_i 0)
+;;      (log_i j)
+      [set_at _str j {at str (add start j)}]
+    )))
     _str
   ]})
 
